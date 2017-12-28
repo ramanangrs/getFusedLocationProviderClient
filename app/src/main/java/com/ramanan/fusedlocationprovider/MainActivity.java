@@ -15,16 +15,18 @@ import com.ramanan.fusedlocationprovider.services.LocationService;
 import com.ramanan.fusedlocationprovider.utils.Utility;
 
 public class MainActivity extends AppCompatActivity {
-    LocationReceiver mLocationReceiver;
+    private LocationReceiver mLocationReceiver;
     private static final String TAG = MainActivity.class.getSimpleName();
-    Activity A_;
-    TextView currentLocation;
+    private Activity A_;
+    private TextView currentLocation;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         A_ = MainActivity.this;
         currentLocation = findViewById(R.id.currentLocation);
+
     }
 
     @Override
@@ -32,12 +34,14 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         //GPS
         if (Utility.isGPSEnabled(A_)) {
-            Intent intent = new Intent(A_, LocationService.class);
-            startService(intent);
-            //Register BroadcastReceiver to receive event from our location service
-            mLocationReceiver = new LocationReceiver();
-            registerReceiver(mLocationReceiver, new IntentFilter(LocationService.MY_LOCATION));
-            Log.i(TAG, " GPS and Location Services are started");
+            if (Utility.checkLocationPermission(A_)) {
+                Intent intent = new Intent(A_, LocationService.class);
+                startService(intent);
+                //Register BroadcastReceiver to receive event from our location service
+                mLocationReceiver = new LocationReceiver();
+                registerReceiver(mLocationReceiver, new IntentFilter(LocationService.MY_LOCATION));
+                Log.i(TAG, " GPS and Location Services are started");
+            }
         }
     }
 
@@ -61,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
                 handleLocationUpdates(location);
             }
         }
+
     }
 
     private void handleLocationUpdates(Location location) {
@@ -70,5 +75,4 @@ public class MainActivity extends AppCompatActivity {
         Log.d("LocationUpdates:", msg);
         currentLocation.setText(msg);
     }
-
 }
