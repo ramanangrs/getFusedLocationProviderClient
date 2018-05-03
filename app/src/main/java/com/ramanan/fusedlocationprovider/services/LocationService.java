@@ -34,12 +34,13 @@ public class LocationService extends Service {
     private static final float mGPSAccuracyLevel = 5f;
     public static final String MY_LOCATION = "MY_CURRENT_LOCATION";
     public static final String INTENT_LOCATION_VALUE = "currentLocation";
-    private Intent intent;
+    private Intent broadcastIntent;
     private int recordCountStatus = 0;
     private FusedLocationProviderClient mFusedLocationClient;
     private LocationRequest mLocationRequest;
     private SettingsClient mSettingsClient;
     private LocationSettingsRequest mLocationSettingsRequest;
+    public static final String GPS_NOT_ENABLED = "GPS_NOT_ENABLED";
 
     public LocationService() {
     }
@@ -47,7 +48,7 @@ public class LocationService extends Service {
     @Override
     public void onCreate() {    // initialize only once
         super.onCreate();
-        intent = new Intent(MY_LOCATION);
+        broadcastIntent = new Intent(MY_LOCATION);
         // new Google API SDK v11 uses getFusedLocationProviderClient(this)
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -61,6 +62,8 @@ public class LocationService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
+        //Context.bindService() to obtain a persistent connection to a service.  does not call onStartCommand(). The client will receive the IBinder object that the service returns from its onBind(Intent) method,
+        //The service will remain running as long as the connection is established
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
@@ -68,6 +71,9 @@ public class LocationService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {  //onStartCommand() can get called multiple times.
         super.onStartCommand(intent, flags, startId);
         return START_STICKY;
+        //Service is not restarted , START_NOT_STICKY : if this service's process is killed while it is started (after returning from onStartCommand(Intent, int, int)), and there are no new start intents to deliver to it, then take the service out of the started state and don't recreate until a future explicit call to Context.startService(Intent).
+        // Service is restarted if it gets terminated , START_STICKY or START_REDELIVER_INTENT are used for services that should only remain running while processing any commands sent to them.
+        // if this service's process is killed while it is started (after returning from onStartCommand(Intent, int, int)), then leave it in the started state but don't retain this delivered intent.
     }
 
     // Trigger new location updates at interval
@@ -96,6 +102,8 @@ public class LocationService extends Service {
                 int statusCode = ((ApiException) e).getStatusCode();
                 switch (statusCode) {
                     case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        broadcastIntent.putExtra(GPS_NOT_ENABLED, mLocationRequest);
+                        sendBroadcast(broadcastIntent);
                         Log.e(TAG, "Location settings are not satisfied. Attempting to upgrade location settings ");
                         break;
                     case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
@@ -137,6 +145,7 @@ public class LocationService extends Service {
         // Create LocationSettingsRequest object using location request
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
         builder.addLocationRequest(mLocationRequest);
+        builder.setAlwaysShow(true);
         mLocationSettingsRequest = builder.build();
     }
 
@@ -215,24 +224,14 @@ public class LocationService extends Service {
                 stopLocationUpdates();
             }
         }
-        intent.putExtra(INTENT_LOCATION_VALUE, location);
-        sendBroadcast(intent);
+        broadcastIntent.putExtra(INTENT_LOCATION_VALUE, location);
+        sendBroadcast(broadcastIntent);
     }
 
     protected void stopLocationUpdates() {
         //stop location updates when  is no longer active
         if (mFusedLocationClient != null) {
-            mFusedLocationClient.removeLocationUpdates(mLocationCallback)
-                    .addOnCompleteListener(new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            if (task.isSuccessful()) {
-                                Log.d(TAG, "stopLocationUpdates: Successful");
-                            } else {
-                                Log.d(TAG, "stopLocationUpdates: " + Log.getStackTraceString(task.getException()));
-                            }
-                        }
-                    });
+            mFusedLocationClient.removeLocationUpdates(mLocationCallback);
         }
     }
 
