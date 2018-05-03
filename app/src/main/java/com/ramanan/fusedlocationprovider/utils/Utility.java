@@ -4,11 +4,8 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.LocationManager;
 import android.os.Build;
-import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -19,7 +16,7 @@ public class Utility {
     /**
      * ENABLE GPS
      */
-    public static boolean isGPSEnabled(Context _context) {
+/*    public static boolean isGPSEnabled(Context _context) {
         boolean isGPSAvail = false;
         // LOCATION_SERVICE
         LocationManager locationManager = (LocationManager) _context.getSystemService(Context.LOCATION_SERVICE);
@@ -36,10 +33,11 @@ public class Utility {
         }
 
         return isGPSAvail;
-    }
+    }*/
 
 
-    private static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+    public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
+
     public static boolean checkLocationPermission(final Context context) {
         int currentAPIVersion = Build.VERSION.SDK_INT;
         if (currentAPIVersion >= android.os.Build.VERSION_CODES.M) {
